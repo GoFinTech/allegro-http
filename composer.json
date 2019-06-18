@@ -1,0 +1,15 @@
+{
+  "name": "gofintech/allegro-http",
+  "description": "Allegro extension for hosting HTTP micro services",
+  "license": "MIT",
+  "require": {
+    "php": ">=7.2",
+    "ext-json": "*",
+    "gofintech/allegro": "^1.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "GoFinTech\\Allegro\\Http\\": "src/"
+    }
+  }
+}
