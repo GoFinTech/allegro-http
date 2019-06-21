@@ -15,7 +15,6 @@ namespace GoFinTech\Allegro\Http;
 use GoFinTech\Allegro\AllegroApp;
 use LogicException;
 use Psr\Container\ContainerInterface;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Yaml\Yaml;
@@ -26,8 +25,6 @@ class HttpApp
 
     /** @var AllegroApp */
     private $app;
-    /** @var LoggerInterface */
-    private $log;
     /** @var array */
     private $options;
     /** @var RequestRouter */
@@ -36,15 +33,14 @@ class HttpApp
     public function __construct(AllegroApp $app, string $configSection)
     {
         $this->app = $app;
-        $this->log = $app->getLogger();
+
+        $this->app->getContainer()->setParameter('allegro.console_logger.force_stderr', true);
 
         $this->options = [
             self::OPTION_MAX_REQUEST_BODY => 1048576,
         ];
 
         $this->loadConfiguration($app->getConfigLocator(), $configSection);
-
-        $this->app->getContainer()->setParameter('allegro.console_logger.force_stderr', true);
     }
 
     private function loadConfiguration(FileLocator $locator, string $configSection): void
