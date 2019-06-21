@@ -43,6 +43,8 @@ class HttpApp
         ];
 
         $this->loadConfiguration($app->getConfigLocator(), $configSection);
+
+        $this->app->getContainer()->setParameter('allegro.console_logger.force_stderr', true);
     }
 
     private function loadConfiguration(FileLocator $locator, string $configSection): void
