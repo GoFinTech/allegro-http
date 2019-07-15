@@ -63,11 +63,20 @@ class HttpApp
             }
         }
 
+        if (isset($http['routes'])) {
+            /* Recommended config */
+            $routes = $http['routes'];
+        }
+        else {
+            /* Legacy ambiguous config */
+            $routes = $http;
+        }
+
         $router = new RequestRouter();
         $container = $this->app->getContainer();
         $sequence = 1;
 
-        foreach ($http as $path => $routeConfig) {
+        foreach ($routes as $path => $routeConfig) {
             $handler = $routeConfig['handler'];
             if ($handler == '@jsonService') {
                 $serviceName = "allegro.http.jsonService.$sequence";
