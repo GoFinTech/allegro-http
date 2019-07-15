@@ -13,6 +13,7 @@ namespace GoFinTech\Allegro\Http;
 
 
 use GoFinTech\Allegro\AllegroApp;
+use GoFinTech\Allegro\Http\Handlers\JsonServiceHandler;
 use LogicException;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\Config\FileLocator;
@@ -63,9 +64,23 @@ class HttpApp
         }
 
         $router = new RequestRouter();
+        $container = $this->app->getContainer();
+        $sequence = 1;
 
         foreach ($http as $path => $routeConfig) {
-            $router->add($path, $routeConfig['handler']);
+            $handler = $routeConfig['handler'];
+            if ($handler == '@jsonService') {
+                $serviceName = "allegro.http.jsonService.$sequence";
+                $container->register($serviceName, JsonServiceHandler::class)
+                    ->setPublic(true)
+                    ->addArgument($routeConfig['interface'])
+                    ->addArgument($routeConfig['service']);
+                $router->add($path, $serviceName);
+                $sequence++;
+            }
+            else {
+                $router->add($path, $handler);
+            }
         }
 
         $this->router = $router;
