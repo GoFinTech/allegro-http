@@ -17,6 +17,7 @@ use GoFinTech\Allegro\Http\Handlers\JsonServiceHandler;
 use LogicException;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\Config\FileLocator;
+use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Yaml\Yaml;
 
@@ -83,7 +84,7 @@ class HttpApp
                 $container->register($serviceName, JsonServiceHandler::class)
                     ->setPublic(true)
                     ->addArgument($routeConfig['interface'])
-                    ->addArgument($routeConfig['service']);
+                    ->addArgument(new Reference($routeConfig['service']));
                 $router->add($path, $serviceName);
                 $sequence++;
             }
