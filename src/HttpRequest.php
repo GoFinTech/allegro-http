@@ -13,6 +13,7 @@ namespace GoFinTech\Allegro\Http;
 
 
 use GoFinTech\Allegro\Http\Implementation\CliOutputInterface;
+use GoFinTech\Allegro\Http\Implementation\EnvVarHeaderAccessor;
 use GoFinTech\Allegro\Http\Implementation\ServerOutputInterface;
 
 class HttpRequest
@@ -25,6 +26,8 @@ class HttpRequest
     public $path;
     /** @var string */
     public $method;
+    /** @var HeaderAccessorInterface */
+    public $headers;
     /** @var RouteEntry */
     public $route;
     /** @var string */
@@ -42,6 +45,8 @@ class HttpRequest
         $request->path = ltrim($path, '/');
 
         $request->method = strtolower($_SERVER['REQUEST_METHOD']);
+
+        $request->headers = new EnvVarHeaderAccessor($_SERVER);
 
         if (php_sapi_name() == 'cli') {
             $request->output = new CliOutputInterface();
