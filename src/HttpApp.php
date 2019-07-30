@@ -24,6 +24,12 @@ use Symfony\Component\Yaml\Yaml;
 class HttpApp
 {
     public const OPTION_MAX_REQUEST_BODY = "maxRequestBody";
+    /**
+     * Controls CORS handling.
+     * - none (default): CORS is disabled and cross-origin requests will fail on browser side
+     * - allow: allows all cross-origin requests without credentials
+     */
+    public const OPTION_CORS_MODE = "corsMode";
 
     /** @var AllegroApp */
     private $app;
@@ -40,6 +46,7 @@ class HttpApp
 
         $this->options = [
             self::OPTION_MAX_REQUEST_BODY => 1048576,
+            self::OPTION_CORS_MODE => 'none'
         ];
 
         $this->loadConfiguration($app->getConfigLocator(), $configSection);
@@ -108,6 +115,9 @@ class HttpApp
 
             $this->router->resolve($request);
 
+            if ($this->handleCors($request))
+                return;
+
             /** @var RequestHandlerInterface $handler */
             $handler = $this->app->getContainer()->get($request->route->getService());
 
@@ -142,5 +152,38 @@ class HttpApp
         /** @var SerializerInterface $serializer */
         $serializer = $this->app->getContainer()->get('serializer');
         return $serializer;
+    }
+
+    /**
+     * Handles CORS rules.
+     * @param HttpRequest $request
+     * @return bool TRUE if request has been handled
+     */
+    private function handleCors(HttpRequest $request): bool
+    {
+        $corsMode = $this->getOption(self::OPTION_CORS_MODE, 'none');
+
+        if ($corsMode != 'allow')
+            return false;
+
+        $origin = $request->headers->get('Origin');
+
+        if (!$origin)
+            return false;
+
+        if ($request->method == 'options') {
+            $out = $request->output;
+            $out->header('Vary: Origin');
+            $out->header("Access-Control-Allow-Origin: $origin");
+            $out->header('Access-Control-Allow-Methods: GET, HEAD, POST, PUT, PATCH, DELETE');
+            $wantHeaders = $request->headers->get('Access-Control-Request-Headers');
+            if ($wantHeaders)
+                $out->header("Access-Control-Allow-Headers: $wantHeaders");
+            $out->header('Access-Control-Max-Age: 86400');
+            return true;
+        }
+
+        $request->output->header("Access-Control-Allow-Origin: $origin");
+        return false;
     }
 }
