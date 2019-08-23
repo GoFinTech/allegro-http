@@ -30,6 +30,16 @@ class HttpException extends RuntimeException
         return $this->statusCode;
     }
 
+    public static function Unauthorized(): HttpException
+    {
+        return new HttpException(401);
+    }
+
+    public static function Forbidden(): HttpException
+    {
+        return new HttpException(403);
+    }
+    
     public static function NotFound(): HttpException
     {
         return new HttpException(404);
