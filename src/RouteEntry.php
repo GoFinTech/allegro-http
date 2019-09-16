@@ -17,19 +17,27 @@ class RouteEntry
     private $path;
     private $service;
 
+    private $prefix;
+
     public function __construct(string $path, string $service)
     {
-        $this->path = $path;
+        $this->path = (substr($path, 0, 1) == '/' ? $path : '/' . $path);
         $this->service = $service;
+
+        $this->prefix = $this->path;
+        if (substr($this->prefix, -1, 1) != '/')
+            $this->prefix .= '/';
     }
 
     public function matches(string $path, &$action): bool
     {
-        $prefix = $this->path . '/';
-        if ($this->path != $path && substr($path, 0, strlen($prefix)) != $prefix)
+        if (substr($path, 0, 1) != '/')
+            $path = '/' . $path;
+
+        if ($this->path != $path && substr($path, 0, strlen($this->prefix)) != $this->prefix)
             return false;
 
-        $action = substr($path, strlen($prefix));
+        $action = substr($path, strlen($this->prefix));
 
         return true;
     }
