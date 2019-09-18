@@ -16,5 +16,6 @@ interface HttpOutputInterface
 {
     public function setStatusCode(int $statusCode): void;
     public function header(string $header): void;
+    public function cookie(string $name, string $value = "", ?int $ttlSeconds = null, ?array $options = null): void;
     public function write($content): void;
 }

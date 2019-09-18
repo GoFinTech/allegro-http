@@ -26,6 +26,25 @@ class ServerOutputInterface implements HttpOutputInterface
         header($header);
     }
 
+    public function cookie(string $name, string $value = "", ?int $ttlSeconds = null, ?array $options = null): void
+    {
+        if (is_null($ttlSeconds))
+            $expires = 0;
+        else if ($ttlSeconds <= 0) {
+            $expires = 1;
+        }
+        else {
+            $expires = time() + $ttlSeconds;
+        }
+        /* FIXME $options for setcookie are only available since 7.3
+        $cookieOptions = ['expires' => $expires];
+        if (!empty($options))
+            $cookieOptions = array_replace($cookieOptions, $options);
+        setcookie($name, $value, $cookieOptions);
+        */
+        setcookie($name, $value, $expires);
+    }
+
     public function write($content): void
     {
         echo $content;

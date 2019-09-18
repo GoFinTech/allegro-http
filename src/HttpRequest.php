@@ -12,6 +12,7 @@
 namespace GoFinTech\Allegro\Http;
 
 
+use GoFinTech\Allegro\Http\Implementation\ArrayCookieAccessor;
 use GoFinTech\Allegro\Http\Implementation\CliOutputInterface;
 use GoFinTech\Allegro\Http\Implementation\EnvVarHeaderAccessor;
 use GoFinTech\Allegro\Http\Implementation\ServerOutputInterface;
@@ -22,14 +23,26 @@ class HttpRequest
     public $http;
     /** @var HttpOutputInterface */
     public $output;
-    /** @var string */
-    public $path;
+
     /** @var string */
     public $method;
+    /** @var string */
+    public $host;
+    /** @var string */
+    public $uri;
+    /** @var string */
+    public $query;
     /** @var HeaderAccessorInterface */
     public $headers;
+    /** @var CookieAccessorInterface */
+    public $cookies;
+    /** @var string */
+    public $remoteAddress;
+
     /** @var RouteEntry */
     public $route;
+    /** @var string */
+    public $path;
     /** @var string */
     public $action;
 
@@ -37,16 +50,23 @@ class HttpRequest
     {
         $request = new HttpRequest();
 
-        $path = $_SERVER['REQUEST_URI'];
+        $request->method = strtolower($_SERVER['REQUEST_METHOD']);
+        $request->host = $_SERVER['HTTP_HOST'];
+        
+        $request->uri = $_SERVER['REQUEST_URI'];
+        $request->query = '';
+        
+        $path = $request->uri;
         $q = strpos($path, '?');
         if ($q !== false) {
+            $request->query = substr($path, $q + 1);
             $path = substr($path, 0, $q);
         }
         $request->path = ltrim($path, '/');
 
-        $request->method = strtolower($_SERVER['REQUEST_METHOD']);
-
         $request->headers = new EnvVarHeaderAccessor($_SERVER);
+        $request->cookies = new ArrayCookieAccessor($_COOKIE);
+        $request->remoteAddress = $_SERVER['REMOTE_ADDR'];
 
         if (php_sapi_name() == 'cli') {
             $request->output = new CliOutputInterface();

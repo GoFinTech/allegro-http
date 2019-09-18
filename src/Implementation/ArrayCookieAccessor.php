@@ -11,23 +11,21 @@
 
 namespace GoFinTech\Allegro\Http\Implementation;
 
-use GoFinTech\Allegro\Http\HeaderAccessorInterface;
 
-class EnvVarHeaderAccessor implements HeaderAccessorInterface
+use GoFinTech\Allegro\Http\CookieAccessorInterface;
+
+class ArrayCookieAccessor implements CookieAccessorInterface
 {
     /** @var string[] */
-    private $vars;
-
-    public function __construct(array $vars)
+    private $cookies;
+    
+    public function __construct(array $cookies)
     {
-        $this->vars = $vars;
+        $this->cookies = $cookies;
     }
 
     public function get(string $name): ?string
     {
-        $var = strtoupper($name);
-        $var = str_replace('-', '_', $var);
-        $var = "HTTP_$var";
-        return $this->vars[$var] ?? null;
+        return $this->cookies[$name] ?? null;
     }
 }

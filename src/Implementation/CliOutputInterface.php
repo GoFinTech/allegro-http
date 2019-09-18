@@ -33,6 +33,11 @@ class CliOutputInterface implements HttpOutputInterface
         echo "$header\n";
     }
 
+    public function cookie(string $name, string $value = "", ?int $ttlSeconds = null, ?array $options = null): void 
+    {
+        echo "Cookie: $name=$value ttl=$ttlSeconds options=" . print_r($options, true) . "\n";
+    }
+
     public function write($content): void
     {
         if (!$this->writing) {
