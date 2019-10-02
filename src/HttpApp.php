@@ -101,6 +101,8 @@ class HttpApp
         }
 
         $this->router = $router;
+
+        $container->register(HttpRequest::class)->setSynthetic(true);
     }
 
     public function handleRequest(HttpRequest $request = null): void
@@ -110,6 +112,8 @@ class HttpApp
         try {
             if (is_null($request))
                 $request = HttpRequest::fromEnv();
+
+            $this->app->getContainer()->set(HttpRequest::class, $request);
 
             $request->http = $this;
 
