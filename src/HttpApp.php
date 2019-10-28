@@ -63,6 +63,9 @@ class HttpApp
             }
         }
 
+        if (!isset($config[$configSection]))
+            throw new LogicException("HttpApp: section $configSection is not defined in http.yml");
+
         $http = $config[$configSection];
 
         if (isset($http['options'])) {
@@ -85,7 +88,9 @@ class HttpApp
         $sequence = 1;
 
         foreach ($routes as $path => $routeConfig) {
-            $handler = $routeConfig['handler'];
+            $handler = $routeConfig['handler'] ?? null;
+            if (is_null($handler))
+                throw new LogicException("HttpApp: route $path of $configSection does not specify handler");
             if ($handler == '@jsonService') {
                 $serviceName = "allegro.http.jsonService.$sequence";
                 $container->register($serviceName, JsonServiceHandler::class)
@@ -153,6 +158,7 @@ class HttpApp
 
     public function getSerializer(): SerializerInterface
     {
+        /** @noinspection PhpUnhandledExceptionInspection */
         /** @var SerializerInterface $serializer */
         $serializer = $this->app->getContainer()->get('serializer');
         return $serializer;
