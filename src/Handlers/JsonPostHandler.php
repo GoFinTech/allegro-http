@@ -48,34 +48,28 @@ abstract class JsonPostHandler implements RequestHandlerInterface
             return null;
         }
 
-        $in = $request->input;
+        $reqLength = $request->headers->get('content-length');
+        $maxLen = $request->http->getOption(HttpApp::OPTION_MAX_REQUEST_BODY);
+        if (isset($reqLength)) {
+          if ($reqLength <= $maxLen)
+              $body = stream_get_contents($request->input, $reqLength);
+          else
+              throw HttpException::PayloadTooLarge();
+        }
+        else {
+            $body = stream_get_contents($request->input, $maxLen);
+            if (strlen($body) >= $maxLen)
+                throw HttpException::PayloadTooLarge();
+        }
+
         try {
-            $reqLength = $request->headers->get('content-length');
-            $maxLen = $request->http->getOption(HttpApp::OPTION_MAX_REQUEST_BODY);
-            if (isset($reqLength)) {
-              if ($reqLength <= $maxLen)
-                  $body = stream_get_contents($in, $reqLength);
-              else
-                  throw HttpException::PayloadTooLarge();
-            }
-            else {
-                $body = stream_get_contents($in, $maxLen);
-                if (strlen($body) >= $maxLen)
-                    throw HttpException::PayloadTooLarge();
-            }
-
-            try {
-                $input = $this->serializer->deserialize($body, $requestClass, 'json');
-            }
-            catch (Exception $ex) {
-                throw new ApplicationException(get_class($ex) . ": " . $ex->getMessage(), 400);
-            }
-
-            return $input;
+            $input = $this->serializer->deserialize($body, $requestClass, 'json');
         }
-        finally {
-            fclose($in);
+        catch (Exception $ex) {
+            throw new ApplicationException(get_class($ex) . ": " . $ex->getMessage(), 400);
         }
+
+        return $input;
     }
 
     protected function writeResponse(HttpRequest $request, $body): void
