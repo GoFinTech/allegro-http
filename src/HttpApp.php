@@ -14,6 +14,7 @@ namespace GoFinTech\Allegro\Http;
 
 use GoFinTech\Allegro\AllegroApp;
 use GoFinTech\Allegro\Http\Handlers\JsonServiceHandler;
+use GoFinTech\Allegro\Http\Implementation\ApiServer;
 use LogicException;
 use Psr\Container\ContainerInterface;
 use Symfony\Component\Config\FileLocator;
@@ -114,9 +115,15 @@ class HttpApp
     {
         $this->app->compile();
 
+        if (is_null($request))
+            $request = HttpRequest::fromEnv();
+
+        $this->processRequest($request);
+    }
+
+    private function processRequest(HttpRequest $request): void
+    {
         try {
-            if (is_null($request))
-                $request = HttpRequest::fromEnv();
 
             $this->app->getContainer()->set(HttpRequest::class, $request);
 
@@ -127,6 +134,7 @@ class HttpApp
             if ($this->handleCors($request))
                 return;
 
+            /** @noinspection PhpUnhandledExceptionInspection */
             /** @var RequestHandlerInterface $handler */
             $handler = $this->app->getContainer()->get($request->route->getService());
 
@@ -137,6 +145,35 @@ class HttpApp
         }
         catch (HttpOutputProducerInterface $ex) {
             $ex->sendOutput($request->output);
+        }
+    }
+
+    public function startServer(int $port): void
+    {
+        $this->app->compile();
+
+        $log = $this->app->getLogger();
+        $log->info("Starting API mode server on port $port");
+
+        $server = new ApiServer($log, $port);
+
+        while (true) {
+            if ($this->app->isTermSignalReceived()) {
+                $log->info('Performing graceful shutdown on SIGTERM');
+                break;
+            }
+
+            $request = $server->accept();
+
+            if (!$request)
+                continue;
+
+            try {
+                $this->processRequest($request);
+            }
+            finally {
+                $server->finish($request);
+            }
         }
     }
 
