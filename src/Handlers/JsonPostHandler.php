@@ -50,11 +50,19 @@ abstract class JsonPostHandler implements RequestHandlerInterface
 
         $in = $request->input;
         try {
+            $reqLength = $request->headers->get('content-length');
             $maxLen = $request->http->getOption(HttpApp::OPTION_MAX_REQUEST_BODY);
-            $body = stream_get_contents($in, $maxLen);
-            $next = stream_get_contents($in, 1);
-            if ($next)
-                throw HttpException::PayloadTooLarge();
+            if (isset($reqLength)) {
+              if ($reqLength <= $maxLen)
+                  $body = stream_get_contents($in, $reqLength);
+              else
+                  throw HttpException::PayloadTooLarge();
+            }
+            else {
+                $body = stream_get_contents($in, $maxLen);
+                if (strlen($body) >= $maxLen)
+                    throw HttpException::PayloadTooLarge();
+            }
 
             try {
                 $input = $this->serializer->deserialize($body, $requestClass, 'json');
