@@ -21,6 +21,8 @@ class HttpRequest
 {
     /** @var HttpApp */
     public $http;
+    /** @var resource */
+    public $input;
     /** @var HttpOutputInterface */
     public $output;
 
@@ -67,6 +69,8 @@ class HttpRequest
         $request->headers = new EnvVarHeaderAccessor($_SERVER);
         $request->cookies = new ArrayCookieAccessor($_COOKIE);
         $request->remoteAddress = $_SERVER['REMOTE_ADDR'];
+
+        $request->input = fopen('php://input', 'r');
 
         if (php_sapi_name() == 'cli') {
             $request->output = new CliOutputInterface();

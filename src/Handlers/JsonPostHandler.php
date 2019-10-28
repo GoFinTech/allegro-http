@@ -48,7 +48,7 @@ abstract class JsonPostHandler implements RequestHandlerInterface
             return null;
         }
 
-        $in = fopen('php://input', 'r');
+        $in = $request->input;
         try {
             $maxLen = $request->http->getOption(HttpApp::OPTION_MAX_REQUEST_BODY);
             $body = stream_get_contents($in, $maxLen);

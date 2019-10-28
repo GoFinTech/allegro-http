@@ -17,6 +17,7 @@ use GoFinTech\Allegro\Http\HttpRequest;
 use LogicException;
 use ReflectionClass;
 use ReflectionException;
+use ReflectionMethod;
 use Symfony\Component\Serializer\SerializerInterface;
 
 class JsonServiceHandler extends JsonPostHandler
@@ -33,7 +34,7 @@ class JsonServiceHandler extends JsonPostHandler
         try {
             $interfaceInfo = new ReflectionClass($interfaceName);
             $this->requestTypes = [];
-            foreach ($interfaceInfo->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
+            foreach ($interfaceInfo->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
                 $params = $method->getParameters();
                 if (isset($params[0]))
                     $this->requestTypes[$method->name] = (string)$params[0]->getType();
