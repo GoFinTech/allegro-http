@@ -14,11 +14,14 @@ namespace GoFinTech\Allegro\Http\Implementation;
 
 use GoFinTech\Allegro\Http\HttpOutputInterface;
 use LogicException;
+use Psr\Log\LoggerInterface;
 
 class ApiServerOutput implements HttpOutputInterface
 {
     /** @var resource */
     private $client;
+    /** @var LoggerInterface */
+    private $log;
     /** @var int */
     private $statusCode;
     /** @var string[] */
@@ -27,9 +30,10 @@ class ApiServerOutput implements HttpOutputInterface
     /** @var bool */
     private $headersSent;
 
-    public function __construct($client)
+    public function __construct($client, $log)
     {
         $this->client = $client;
+        $this->log = $log;
         $this->statusCode = 200;
         $this->headers = [];
         $this->headersSent = false;
@@ -99,6 +103,7 @@ class ApiServerOutput implements HttpOutputInterface
                 default: $text = "Unknown"; break;
             }
             fwrite($this->client, "HTTP/1.0 {$this->statusCode} $text\r\n");
+            $this->log->info("OUT {$this->statusCode}");
             foreach ($this->headers as $header) {
                 fwrite($this->client, "$header\r\n");
             }

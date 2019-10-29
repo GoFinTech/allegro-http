@@ -67,6 +67,9 @@ class ApiServer
         $request->path = parse_url($request->uri, PHP_URL_PATH);
         $request->query = parse_url($request->uri, PHP_URL_QUERY);
 
+        $portAt = strrpos($peer, ':');
+        $request->remoteAddress = substr($peer, 0, $portAt);
+
         $headers = [];
         $lastHeader = null;
 
@@ -97,7 +100,7 @@ class ApiServer
         $request->cookies = new ArrayCookieAccessor([]); // TODO Cookies
 
         $request->input = $client;
-        $request->output = new ApiServerOutput($client);
+        $request->output = new ApiServerOutput($client, $this->log);
 
         return $request;
     }

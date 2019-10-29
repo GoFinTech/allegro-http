@@ -169,6 +169,7 @@ class HttpApp
                 continue;
 
             try {
+                $log->info("IN {$request->remoteAddress} {$request->method} {$request->uri}");
                 $this->processRequest($request);
             }
             finally {
