@@ -35,6 +35,8 @@ class HttpApp
 
     /** @var AllegroApp */
     private $app;
+    /** @var string */
+    private $appName;
     /** @var array */
     private $options;
     /** @var RequestRouter */
@@ -58,6 +60,8 @@ class HttpApp
     {
         $fileName = $locator->locate('http.yml');
         $config = Yaml::parseFile($fileName);
+
+        $this->appName = $configSection;
 
         if (isset($config['options'])) {
             foreach ($config['options'] as $key => $value) {
@@ -154,7 +158,7 @@ class HttpApp
         $this->app->compile();
 
         $log = $this->app->getLogger();
-        $log->info("Starting API mode server on port $port");
+        $log->info("Starting API mode server {$this->appName} on port $port");
 
         $server = new ApiServer($log, $port);
 
