@@ -12,6 +12,7 @@
 namespace GoFinTech\Allegro\Http;
 
 
+use Exception;
 use GoFinTech\Allegro\AllegroApp;
 use GoFinTech\Allegro\Http\Handlers\JsonServiceHandler;
 use GoFinTech\Allegro\Http\Implementation\ApiServer;
@@ -171,6 +172,10 @@ class HttpApp
             try {
                 $log->info("IN {$request->remoteAddress} {$request->method} {$request->uri}");
                 $this->processRequest($request);
+            }
+            catch (Exception $ex) {
+                $log->error('EX ' . get_class($ex) . ': ' . $ex->getMessage(), ['exception' => $ex]);
+                $server->fail($request);
             }
             finally {
                 $server->finish($request);

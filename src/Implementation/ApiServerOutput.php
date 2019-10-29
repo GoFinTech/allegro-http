@@ -111,4 +111,13 @@ class ApiServerOutput implements HttpOutputInterface
         }
         fwrite($this->client, $content);
     }
+
+    public function fail(): void
+    {
+        if ($this->headersSent)
+            return;
+
+        $this->headers = [];
+        $this->statusCode = 500;
+    }
 }

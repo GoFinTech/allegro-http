@@ -110,4 +110,11 @@ class ApiServer
         $request->output->write('');
         fclose($request->input);
     }
+
+    public function fail(HttpRequest $request): void
+    {
+        /** @var ApiServerOutput $out */
+        $out = $request->output;
+        $out->fail();
+    }
 }
