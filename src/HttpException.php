@@ -30,28 +30,17 @@ class HttpException extends RuntimeException
         return $this->statusCode;
     }
 
-    public static function Unauthorized(): HttpException
-    {
-        return new HttpException(401);
-    }
-
-    public static function Forbidden(): HttpException
-    {
-        return new HttpException(403);
-    }
-    
-    public static function NotFound(): HttpException
-    {
-        return new HttpException(404);
-    }
-
-    public static function MethodNotAllowed(): HttpException
-    {
-        return new HttpException(405);
-    }
-
-    public static function PayloadTooLarge()
-    {
-        return new HttpException(413);
-    }
+    public static function BadRequest(): HttpException { return new HttpException(400); }
+    public static function Unauthorized(): HttpException { return new HttpException(401); }
+    public static function Forbidden(): HttpException { return new HttpException(403); }
+    public static function NotFound(): HttpException { return new HttpException(404); }
+    public static function MethodNotAllowed(): HttpException { return new HttpException(405); }
+    public static function NotAcceptable(): HttpException { return new HttpException(406); }
+    public static function Conflict(): HttpException { return new HttpException(409); }
+    public static function Gone(): HttpException { return new HttpException(410); }
+    public static function PreconfitionFailed() { return new HttpException(412); }
+    public static function PayloadTooLarge() { return new HttpException(413); }
+    public static function InternalServerError() { return new HttpException(500); }
+    public static function NotImplemented() { return new HttpException(501); }
+    public static function ServiceUnavailable() { return new HttpException(503); }
 }
