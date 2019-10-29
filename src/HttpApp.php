@@ -169,15 +169,18 @@ class HttpApp
             if (!$request)
                 continue;
 
+            $success = false;
             try {
                 $log->info("IN {$request->remoteAddress} {$request->method} {$request->uri}");
                 $this->processRequest($request);
+                $success = true;
             }
             catch (Exception $ex) {
                 $log->error('EX ' . get_class($ex) . ': ' . $ex->getMessage(), ['exception' => $ex]);
-                $server->fail($request);
             }
             finally {
+                if (!$success)
+                    $server->fail($request);
                 $server->finish($request);
             }
         }
