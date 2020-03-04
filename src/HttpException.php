@@ -38,7 +38,9 @@ class HttpException extends RuntimeException
     public static function NotAcceptable(): HttpException { return new HttpException(406); }
     public static function Conflict(): HttpException { return new HttpException(409); }
     public static function Gone(): HttpException { return new HttpException(410); }
+    /** @obsolete Please use PreconditionFailed */
     public static function PreconfitionFailed() { return new HttpException(412); }
+    public static function PreconditionFailed() { return new HttpException(412); }
     public static function PayloadTooLarge() { return new HttpException(413); }
     public static function InternalServerError() { return new HttpException(500); }
     public static function NotImplemented() { return new HttpException(501); }
