@@ -3,7 +3,7 @@
 /*
  * This file is part of the Allegro framework.
  *
- * (c) 2019 Go Financial Technologies, JSC
+ * (c) 2019-2020 Go Financial Technologies, JSC
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -36,7 +36,7 @@ class ApiServer
         if (!$client)
             return null;
 
-        $this->log->debug("Received request from $peer");;
+        $this->log->debug("Received request from $peer");
 
         try {
             return $this->readRequest($client, $peer);
@@ -62,7 +62,7 @@ class ApiServer
 
         $request = new HttpRequest();
 
-        $request->method = $match[1];
+        $request->method = strtolower($match[1]);
         $request->uri = $match[2];
         $request->path = parse_url($request->uri, PHP_URL_PATH);
         $request->query = parse_url($request->uri, PHP_URL_QUERY);
