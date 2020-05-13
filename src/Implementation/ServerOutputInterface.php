@@ -13,6 +13,7 @@ namespace GoFinTech\Allegro\Http\Implementation;
 
 
 use GoFinTech\Allegro\Http\HttpOutputInterface;
+use GoFinTech\Logging\elog;
 
 class ServerOutputInterface implements HttpOutputInterface
 {
@@ -36,13 +37,26 @@ class ServerOutputInterface implements HttpOutputInterface
         else {
             $expires = time() + $ttlSeconds;
         }
-        /* FIXME $options for setcookie are only available since 7.3
-        $cookieOptions = ['expires' => $expires];
-        if (!empty($options))
-            $cookieOptions = array_replace($cookieOptions, $options);
-        setcookie($name, $value, $cookieOptions);
-        */
-        setcookie($name, $value, $expires);
+
+        // cookie path defaults to / because otherwise the default path is ambiguous
+        // and frankly, I thought it was like that by default :P
+
+        if (PHP_VERSION_ID >= 70300) {
+            // $options for setcookie are only available since 7.3
+            $cookieOptions = ['expires' => $expires, 'path' => '/'];
+            if (!empty($options))
+                $cookieOptions = array_replace($cookieOptions, $options);
+            setcookie($name, $value, $cookieOptions);
+        }
+        else {
+            // emulation for 7.2
+            $path = $options['path'] ?? '/';
+            $domain = $options['domain'] ?? '';
+            $secure = $options['secure'] ?? false;
+            $httpOnly = $options['httponly'] ?? false;
+
+            setcookie($name, $value, $expires, $path, $domain, $secure, $httpOnly);
+        }
     }
 
     public function write($content): void
