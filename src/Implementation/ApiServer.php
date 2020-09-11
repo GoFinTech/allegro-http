@@ -48,7 +48,7 @@ class ApiServer
             $this->log->error("Error reading client request", ["exception" => $ex]);
         }
 
-        fwrite($client, "HTTP/1.0 400 Bad Request\r\nContent-Length: 0\r\n\r\n");
+        @fwrite($client, "HTTP/1.0 400 Bad Request\r\nContent-Length: 0\r\n\r\n");
         fclose($client);
         return null;
     }
@@ -107,7 +107,12 @@ class ApiServer
 
     public function finish(HttpRequest $request): void
     {
-        $request->output->write('');
+        try {
+            $request->output->write('');
+        }
+        catch (Exception $ex) {
+            $this->log->error("Additional error during request finish", ["exception" => $ex]);
+        }
         fclose($request->input);
     }
 
