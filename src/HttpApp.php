@@ -3,7 +3,7 @@
 /*
  * This file is part of the Allegro framework.
  *
- * (c) 2019 Go Financial Technologies, JSC
+ * (c) 2019,2020 Go Financial Technologies, JSC
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -181,6 +181,9 @@ class HttpApp
             }
             catch (Exception $ex) {
                 $log->error('EX ' . get_class($ex) . ': ' . $ex->getMessage(), ['exception' => $ex]);
+                if ($this->app->isExceptionDeadly($ex)) {
+                    throw $ex;
+                }
             }
             finally {
                 if (!$success)
