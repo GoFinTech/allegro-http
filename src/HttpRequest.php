@@ -13,9 +13,9 @@ namespace GoFinTech\Allegro\Http;
 
 
 use GoFinTech\Allegro\Http\Implementation\ArrayCookieAccessor;
-use GoFinTech\Allegro\Http\Implementation\CliOutputInterface;
+use GoFinTech\Allegro\Http\Implementation\CliOutput;
 use GoFinTech\Allegro\Http\Implementation\EnvVarHeaderAccessor;
-use GoFinTech\Allegro\Http\Implementation\ServerOutputInterface;
+use GoFinTech\Allegro\Http\Implementation\ServerOutput;
 
 class HttpRequest
 {
@@ -73,10 +73,10 @@ class HttpRequest
         $request->input = fopen('php://input', 'r');
 
         if (php_sapi_name() == 'cli') {
-            $request->output = new CliOutputInterface();
+            $request->output = new CliOutput();
         }
         else {
-            $request->output = new ServerOutputInterface();
+            $request->output = new ServerOutput();
         }
 
         return $request;
