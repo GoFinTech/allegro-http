@@ -3,7 +3,7 @@
 /*
  * This file is part of the Allegro framework.
  *
- * (c) 2019-2020 Go Financial Technologies, JSC
+ * (c) 2019-2021 Go Financial Technologies, JSC
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -97,7 +97,16 @@ class ApiServer
             throw new ApiServerException("No host specified");
 
         $request->headers = new ArrayHeaderAccessor($headers);
-        $request->cookies = new ArrayCookieAccessor([]); // TODO Cookies
+
+        $cookies = [];
+        $cookieHeader = $request->headers->get('cookie');
+        if (!empty($cookieHeader)) {
+            foreach (explode(';', $cookieHeader) as $item) {
+                list ($cookieName, $cookieValue) = explode('=', trim($item), 2);
+                $cookies[$cookieName] = $cookieValue;
+            }
+        }
+        $request->cookies = new ArrayCookieAccessor($cookies);
 
         $request->input = $client;
         $request->output = new ApiServerOutput($client, $this->log);

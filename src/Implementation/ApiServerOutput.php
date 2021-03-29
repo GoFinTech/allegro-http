@@ -121,7 +121,35 @@ class ApiServerOutput implements HttpOutputInterface
 
     public function cookie(string $name, string $value = "", ?int $ttlSeconds = null, ?array $options = null): void
     {
-        // TODO: Implement cookie() method.
+        $str = "$name=$value";
+        $par = [
+            'path=' => '/',
+        ];
+        if (is_int($ttlSeconds)) {
+            if ($ttlSeconds <= 0)
+                $par['max-age='] = -1;
+            else
+                $par['max-age='] = $ttlSeconds;
+        }
+        if (!empty($options)) {
+            foreach ($options as $key => $value) {
+                $key = strtolower($key);
+                switch ($key) {
+                    case 'secure':
+                    case 'httponly':
+                        if ($value)
+                            $par[$key] = '';
+                        break;
+                    default:
+                        $par["$key="] = $value;
+                        break;
+                }
+            }
+        }
+        foreach ($par as $key => $value) {
+            $str .= '; ' . $key . $value;
+        }
+        $this->header("Set-Cookie: $str");
     }
 
     public function write($content): void
