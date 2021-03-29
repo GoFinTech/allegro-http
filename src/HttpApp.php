@@ -147,6 +147,14 @@ class HttpApp
             if ($this->handleCors($request))
                 return;
 
+            if ($request->method == 'get' && $request->headers->get('upgrade-insecure-requests') == '1') {
+                $out = $request->output;
+                $out->setStatusCode(301);
+                $out->header("Location: https://{$request->host}{$request->uri}");
+                $out->header("Vary: Upgrade-Insecure-Requests");
+                return;
+            }
+
             /** @noinspection PhpUnhandledExceptionInspection */
             /** @var RequestHandlerInterface $handler */
             $handler = $this->app->getContainer()->get($request->route->getService());
