@@ -3,7 +3,7 @@
 /*
  * This file is part of the Allegro framework.
  *
- * (c) 2019,2020 Go Financial Technologies, JSC
+ * (c) 2019-2021 Go Financial Technologies, JSC
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -32,6 +32,12 @@ class HttpApp
      * - allow: allows all cross-origin requests without credentials
      */
     public const OPTION_CORS_MODE = "corsMode";
+    /**
+     * Specifies a header to deduce a real client IP address
+     * - "" (default, empty): IP is taken directly from connection / http server environment
+     * - name-of-header: a header that contains an actual IP address or is an X-Forwarded-For style header
+     */
+    public const OPTION_REALIP_HEADER = "realIpHeader";
 
     /** @var AllegroApp */
     private $app;
@@ -50,7 +56,8 @@ class HttpApp
 
         $this->options = [
             self::OPTION_MAX_REQUEST_BODY => 1048576,
-            self::OPTION_CORS_MODE => 'none'
+            self::OPTION_CORS_MODE => 'none',
+            self::OPTION_REALIP_HEADER => null,
         ];
 
         $this->loadConfiguration($app->getConfigLocator(), $configSection);
@@ -123,6 +130,7 @@ class HttpApp
         if (is_null($request))
             $request = HttpRequest::fromEnv();
 
+        $this->handleRealIp($request);
         $this->processRequest($request);
     }
 
@@ -175,6 +183,7 @@ class HttpApp
 
             $success = false;
             try {
+                $this->handleRealIp($request);
                 $log->info("IN {$request->remoteAddress} {$request->method} {$request->uri}");
                 $this->processRequest($request);
                 $success = true;
@@ -248,5 +257,43 @@ class HttpApp
 
         $request->output->header("Access-Control-Allow-Origin: $origin");
         return false;
+    }
+
+    /**
+     * Extracts and overrides remoteAddress as configured in realIp* options.
+     * @param HttpRequest $request
+     */
+    private function handleRealIp(HttpRequest $request): void
+    {
+        $realIpHeader = $this->getOption(self::OPTION_REALIP_HEADER);
+        if (empty($realIpHeader))
+            return;
+
+        $realIpValue = $request->headers->get($realIpHeader);
+        if (empty($realIpValue))
+            return;
+
+        // Direct IP address specification option
+        if (preg_match('/^[0-9]{1,3}([.][0-9]{1,3}){3}$/', $realIpValue)) {
+            $request->remoteAddress = $realIpValue;
+            return;
+        }
+
+        // Assuming X-Forwarded-For style
+        $forwardList = array_reverse(explode(',', $realIpValue));
+        $takeNext = false;
+        foreach ($forwardList as $item) {
+            $item = trim($item);
+            if ($takeNext) {
+                $request->remoteAddress = $item;
+                return;
+            }
+            if (preg_match('/^(10[.]|192[.]168[.]|172[.](1[6-9]|2[0-9]|3[0-1])[.]|127[.])/', $item)) {
+                // Internal address - skip until external is found
+                continue;
+            }
+            // External address is found - assume next one is the client unless you have multiple proxies with public IPs
+            $takeNext = true;
+        }
     }
 }
