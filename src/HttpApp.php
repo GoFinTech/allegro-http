@@ -31,13 +31,35 @@ class HttpApp
      * - none (default): CORS is disabled and cross-origin requests will fail on browser side
      * - allow: allows all cross-origin requests without credentials
      */
-    public const OPTION_CORS_MODE = "corsMode";
+    public const OPTION_CORS_MODE = 'corsMode';
     /**
      * Specifies a header to deduce a real client IP address
      * - "" (default, empty): IP is taken directly from connection / http server environment
      * - name-of-header: a header that contains an actual IP address or is an X-Forwarded-For style header
      */
-    public const OPTION_REALIP_HEADER = "realIpHeader";
+    public const OPTION_REALIP_HEADER = 'realIpHeader';
+    /**
+     * Specifies a header with proxied protocol/scheme. Mainly required for Upgrade-Insecure-Requests and such.
+     * - "" (default, empty): plain http is always assumed
+     * - name-of-header: a header that contains access scheme like 'http' or 'https'
+     */
+    public const OPTION_REALIP_SCHEME = 'realIpScheme';
+    /**
+     * Enabled automatic redirects from plain HTTP to HTTPS.
+     * - none (default): no redirects are performed, the application can still handle it directly
+     * - auto: will try to do redirects where appropriate
+     */
+    public const OPTION_SSL_REDIRECT = 'sslRedirect';
+    /**
+     * Request tag indicating that request remoteAddress has been overridden.
+     * The tag value will contain the address before override.
+     */
+    public const REQTAG_REALIP_IP = 'allegro:realip:ip';
+    /**
+     * Request tag indicating that request scheme has been overriden.
+     * The tag value will contain the scheme before override.
+     */
+    public const REQTAG_REALIP_SCHEME = 'allegro:realip:scheme';
 
     /** @var AllegroApp */
     private $app;
@@ -58,6 +80,8 @@ class HttpApp
             self::OPTION_MAX_REQUEST_BODY => 1048576,
             self::OPTION_CORS_MODE => 'none',
             self::OPTION_REALIP_HEADER => null,
+            self::OPTION_REALIP_SCHEME => null,
+            self::OPTION_SSL_REDIRECT => 'none',
         ];
 
         $this->loadConfiguration($app->getConfigLocator(), $configSection);
@@ -147,13 +171,8 @@ class HttpApp
             if ($this->handleCors($request))
                 return;
 
-            if ($request->method == 'get' && $request->headers->get('upgrade-insecure-requests') == '1') {
-                $out = $request->output;
-                $out->setStatusCode(301);
-                $out->header("Location: https://{$request->host}{$request->uri}");
-                $out->header("Vary: Upgrade-Insecure-Requests");
+            if ($this->handleSSLRedirect($request))
                 return;
-            }
 
             /** @noinspection PhpUnhandledExceptionInspection */
             /** @var RequestHandlerInterface $handler */
@@ -268,10 +287,56 @@ class HttpApp
     }
 
     /**
-     * Extracts and overrides remoteAddress as configured in realIp* options.
+     * Performs automatic redirects to SSL if configured.
+     * @param HttpRequest $request
+     * @return bool TRUE if request has been handled
+     */
+    private function handleSSLRedirect(HttpRequest $request): bool
+    {
+        if ($request->scheme == 'https')
+            return false;
+
+        $redirMode = $this->getOption(self::OPTION_SSL_REDIRECT);
+        if ($redirMode != 'auto')
+            return false;
+
+        // If we have reverse proxy but the request does not come from it then we cannot redirect
+        if (!empty($this->getOption(self::OPTION_REALIP_SCHEME))
+            && !isset($request->tags[self::REQTAG_REALIP_SCHEME]))
+            return false;
+
+        if ($request->headers->get('upgrade-insecure-requests') == '1') {
+            // Browser is willing to cooperate, so we upgrade all requests
+            $out = $request->output;
+            $out->setStatusCode(308);
+            $out->header("Location: https://{$request->host}{$request->uri}");
+            $out->header("Vary: Upgrade-Insecure-Requests");
+            return true;
+        }
+
+        // If browser does not advertise cooperation then we only redirect GETs as a more robust option
+        if ($request->method == 'get')
+        {
+            $out = $request->output;
+            $out->setStatusCode(301);
+            $out->header("Location: https://{$request->host}{$request->uri}");
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Extracts and overrides remoteAddress and scheme as configured in realIp* options.
      * @param HttpRequest $request
      */
     private function handleRealIp(HttpRequest $request): void
+    {
+        $this->proxyRemoteAddress($request);
+        $this->proxyScheme($request);
+    }
+
+    private function proxyRemoteAddress(HttpRequest $request): void
     {
         $realIpHeader = $this->getOption(self::OPTION_REALIP_HEADER);
         if (empty($realIpHeader))
@@ -283,6 +348,7 @@ class HttpApp
 
         // Direct IP address specification option
         if (preg_match('/^[0-9]{1,3}([.][0-9]{1,3}){3}$/', $realIpValue)) {
+            $request->tags[self::REQTAG_REALIP_IP] = $request->remoteAddress;
             $request->remoteAddress = $realIpValue;
             return;
         }
@@ -293,6 +359,7 @@ class HttpApp
         foreach ($forwardList as $item) {
             $item = trim($item);
             if ($takeNext) {
+                $request->tags[self::REQTAG_REALIP_IP] = $request->remoteAddress;
                 $request->remoteAddress = $item;
                 return;
             }
@@ -303,5 +370,32 @@ class HttpApp
             // External address is found - assume next one is the client unless you have multiple proxies with public IPs
             $takeNext = true;
         }
+    }
+
+    private function proxyScheme(HttpRequest $request): void
+    {
+        $schemeHeader = $this->getOption(self::OPTION_REALIP_SCHEME);
+        if (empty($schemeHeader))
+            return;
+
+        $schemeValue = $request->headers->get($schemeHeader);
+        if (empty($schemeValue))
+            return;
+
+        $originalScheme = $request->scheme;
+
+        switch ($schemeValue) {
+            case 'http':
+                $request->scheme = 'http';
+                break;
+            case 'https':
+                $request->scheme = 'https';
+                break;
+            default:
+                // do nothing;
+                return;
+        }
+
+        $request->tags[self::REQTAG_REALIP_SCHEME] = $originalScheme;
     }
 }

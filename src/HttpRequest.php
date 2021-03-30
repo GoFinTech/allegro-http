@@ -27,6 +27,8 @@ class HttpRequest
     public $output;
 
     /** @var string */
+    public $scheme;
+    /** @var string */
     public $method;
     /** @var string */
     public $host;
@@ -48,10 +50,14 @@ class HttpRequest
     /** @var string */
     public $action;
 
+    /** @var array */
+    public $tags;
+
     public static function fromEnv(): HttpRequest
     {
         $request = new HttpRequest();
 
+        $request->scheme = empty($_SERVER['HTTPS'] ?? '') ? 'http' : 'https';
         $request->method = strtolower($_SERVER['REQUEST_METHOD']);
         $request->host = $_SERVER['HTTP_HOST'];
         
@@ -78,6 +84,8 @@ class HttpRequest
         else {
             $request->output = new ServerOutput();
         }
+
+        $request->tags = [];
 
         return $request;
     }

@@ -62,6 +62,7 @@ class ApiServer
 
         $request = new HttpRequest();
 
+        $request->scheme = 'http';
         $request->method = strtolower($match[1]);
         $request->uri = $match[2];
         $request->path = parse_url($request->uri, PHP_URL_PATH);
@@ -110,6 +111,8 @@ class ApiServer
 
         $request->input = $client;
         $request->output = new ApiServerOutput($client, $this->log);
+
+        $request->tags = [];
 
         return $request;
     }
