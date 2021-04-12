@@ -12,6 +12,7 @@
 namespace GoFinTech\Allegro\Http\Implementation;
 
 
+use ErrorException;
 use GoFinTech\Allegro\Http\HttpOutputInterface;
 use LogicException;
 use Psr\Log\LoggerInterface;
@@ -154,17 +155,25 @@ class ApiServerOutput implements HttpOutputInterface
 
     public function write($content): void
     {
-        if (!$this->headersSent) {
-            $this->headersSent = true;
-            $text = self::$HTTP_STATUS_TEXT[$this->statusCode] ?? "Unknown";
-            fwrite($this->client, "HTTP/1.1 {$this->statusCode} $text\r\n");
-            $this->log->info("OUT {$this->statusCode}");
-            foreach ($this->headers as $header) {
-                fwrite($this->client, "$header\r\n");
+        try {
+            if (!$this->headersSent) {
+                $this->headersSent = true;
+                $text = self::$HTTP_STATUS_TEXT[$this->statusCode] ?? "Unknown";
+                fwrite($this->client, "HTTP/1.1 {$this->statusCode} $text\r\n");
+                $this->log->info("OUT {$this->statusCode}");
+                foreach ($this->headers as $header) {
+                    fwrite($this->client, "$header\r\n");
+                }
+                fwrite($this->client, "\r\n");
             }
-            fwrite($this->client, "\r\n");
+            fwrite($this->client, $content);
         }
-        fwrite($this->client, $content);
+        catch (ErrorException $ex) {
+            if ($ex->getCode() == 53)
+                throw new ApiServerException("Client disconnected");
+            else
+                throw $ex;
+        }
     }
 
     public function fail(): void

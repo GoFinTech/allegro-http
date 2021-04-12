@@ -56,9 +56,12 @@ class ApiServer
     private function readRequest($client, $peer): HttpRequest
     {
         $http = fgets($client);
-        if (!preg_match('/^([^\s]+)\s+([^\s]+)\s+([^\s]+)\s*$/', $http, $match)) {
+
+        if (empty($http))
+            throw new ApiServerException("No request received");
+
+        if (!preg_match('/^([^\s]+)\s+([^\s]+)\s+([^\s]+)\s*$/', $http, $match))
             throw new ApiServerException("Malformed first line");
-        }
 
         $request = new HttpRequest();
 
