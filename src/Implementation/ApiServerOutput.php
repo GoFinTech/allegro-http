@@ -169,7 +169,7 @@ class ApiServerOutput implements HttpOutputInterface
             fwrite($this->client, $content);
         }
         catch (ErrorException $ex) {
-            if ($ex->getCode() == 53)
+            if ($ex->getCode() == 32 /* broken pipe */)
                 throw new ApiServerException("Client disconnected");
             else
                 throw $ex;
