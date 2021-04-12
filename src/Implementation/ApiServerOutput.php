@@ -155,25 +155,17 @@ class ApiServerOutput implements HttpOutputInterface
 
     public function write($content): void
     {
-        try {
-            if (!$this->headersSent) {
-                $this->headersSent = true;
-                $text = self::$HTTP_STATUS_TEXT[$this->statusCode] ?? "Unknown";
-                fwrite($this->client, "HTTP/1.1 {$this->statusCode} $text\r\n");
-                $this->log->info("OUT {$this->statusCode}");
-                foreach ($this->headers as $header) {
-                    fwrite($this->client, "$header\r\n");
-                }
-                fwrite($this->client, "\r\n");
+        if (!$this->headersSent) {
+            $this->headersSent = true;
+            $text = self::$HTTP_STATUS_TEXT[$this->statusCode] ?? "Unknown";
+            fwrite($this->client, "HTTP/1.1 {$this->statusCode} $text\r\n");
+            $this->log->info("OUT {$this->statusCode}");
+            foreach ($this->headers as $header) {
+                fwrite($this->client, "$header\r\n");
             }
-            fwrite($this->client, $content);
+            fwrite($this->client, "\r\n");
         }
-        catch (ErrorException $ex) {
-            if ($ex->getCode() == 32 /* broken pipe */)
-                throw new ApiServerException("Client disconnected");
-            else
-                throw $ex;
-        }
+        fwrite($this->client, $content);
     }
 
     public function fail(): void
