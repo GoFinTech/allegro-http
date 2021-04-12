@@ -70,9 +70,15 @@ class HttpApp
     /** @var RequestRouter */
     private $router;
 
-    public function __construct(AllegroApp $app, string $configSection)
+    /**
+     * HttpApp constructor.
+     * @param string|AllegroApp $configSection config section name in http.yml.
+     *      Might be an AllegroApp instance for backward compatibility.
+     * @param string|null $legacyConfigSection config section name if app instance is passed as the first argument
+     */
+    public function __construct($configSection, $legacyConfigSection = null)
     {
-        $this->app = $app;
+        $this->app = AllegroApp::resolveConstructorParameters('HttpApp', $configSection, $legacyConfigSection);
 
         $this->app->getContainer()->setParameter('allegro.console_logger.force_stderr', true);
 
@@ -84,7 +90,7 @@ class HttpApp
             self::OPTION_SSL_REDIRECT => 'none',
         ];
 
-        $this->loadConfiguration($app->getConfigLocator(), $configSection);
+        $this->loadConfiguration($this->app->getConfigLocator(), $configSection);
     }
 
     private function loadConfiguration(FileLocator $locator, string $configSection): void
@@ -227,6 +233,18 @@ class HttpApp
                 $server->finish($request);
             }
         }
+    }
+
+    /**
+     * Shorthand for handling request under FPM or starting API-mode server on specified port.
+     * @param int $port port for API-mode server if started as CLI.
+     */
+    public function run(int $port): void
+    {
+        if (php_sapi_name() == 'cli')
+            $this->startServer($port);
+        else
+            $this->handleRequest();
     }
 
     public function getOption(string $option, $default = null)
