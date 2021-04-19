@@ -39,6 +39,11 @@ abstract class JsonPostHandler implements RequestHandlerInterface
         $input = $this->readRequest($request, $requestClass);
         $output = call_user_func($method, $input);
         unset($input);
+
+        // in case of a direct response we skip further request handling and writing output again
+        if (in_array(JsonServiceHandler::DIRECT_RESPONSE, $request->tags))
+            return;
+
         $this->writeResponse($request, $output);
     }
 
