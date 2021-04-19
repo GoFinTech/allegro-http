@@ -22,6 +22,8 @@ use Symfony\Component\Serializer\SerializerInterface;
 
 abstract class JsonPostHandler implements RequestHandlerInterface
 {
+    public const DIRECT_RESPONSE = 'allegro:jsonpost:direct_response';
+
     /** @var ?SerializerInterface */
     private $serializer;
 
@@ -41,7 +43,7 @@ abstract class JsonPostHandler implements RequestHandlerInterface
         unset($input);
 
         // in case of a direct response we skip further request handling and writing output again
-        if (in_array(JsonServiceHandler::DIRECT_RESPONSE, $request->tags))
+        if ($request->hasTag(self::DIRECT_RESPONSE))
             return;
 
         $this->writeResponse($request, $output);

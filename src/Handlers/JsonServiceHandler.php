@@ -22,8 +22,6 @@ use Symfony\Component\Serializer\SerializerInterface;
 
 class JsonServiceHandler extends JsonPostHandler
 {
-    public const DIRECT_RESPONSE = 'direct_response';
-
     /** @var string[] indexed by method name */
     private $requestTypes;
     /** @var object */

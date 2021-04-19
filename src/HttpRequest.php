@@ -60,10 +60,10 @@ class HttpRequest
         $request->scheme = empty($_SERVER['HTTPS'] ?? '') ? 'http' : 'https';
         $request->method = strtolower($_SERVER['REQUEST_METHOD']);
         $request->host = $_SERVER['HTTP_HOST'];
-        
+
         $request->uri = $_SERVER['REQUEST_URI'];
         $request->query = '';
-        
+
         $path = $request->uri;
         $q = strpos($path, '?');
         if ($q !== false) {
@@ -80,13 +80,27 @@ class HttpRequest
 
         if (php_sapi_name() == 'cli') {
             $request->output = new CliOutput();
-        }
-        else {
+        } else {
             $request->output = new ServerOutput();
         }
 
         $request->tags = [];
 
         return $request;
+    }
+
+    public function setTag(string $tag, $value): void
+    {
+        $this->tags[$tag] = $value;
+    }
+
+    public function getTag(string $tag)
+    {
+        return $this->tags[$tag] ?? null;
+    }
+
+    public function hasTag(string $tag): bool
+    {
+        return isset($this->tags[$tag]);
     }
 }
