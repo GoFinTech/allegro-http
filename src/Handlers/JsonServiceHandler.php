@@ -22,6 +22,8 @@ use Symfony\Component\Serializer\SerializerInterface;
 
 class JsonServiceHandler extends JsonPostHandler
 {
+    public const DIRECT_RESPONSE = 'direct_response';
+
     /** @var string[] indexed by method name */
     private $requestTypes;
     /** @var object */
@@ -49,6 +51,10 @@ class JsonServiceHandler extends JsonPostHandler
 
     public function handleRequest(HttpRequest $request): void
     {
+        // in case of a direct response we skip further request handling
+        if (in_array(self::DIRECT_RESPONSE, $request->tags))
+            return;
+
         $serviceMethod = $request->action;
         $requestType = $this->requestTypes[$serviceMethod] ?? null;
         if (!isset($requestType))
