@@ -158,7 +158,7 @@ class ApiServerOutput implements HttpOutputInterface
         if (!$this->headersSent) {
             $this->headersSent = true;
             $text = self::$HTTP_STATUS_TEXT[$this->statusCode] ?? "Unknown";
-            fwrite($this->client, "HTTP/1.1 {$this->statusCode} $text\r\n");
+            fwrite($this->client, "HTTP/1.0 {$this->statusCode} $text\r\n");
             $this->log->info("OUT {$this->statusCode}");
             foreach ($this->headers as $header) {
                 fwrite($this->client, "$header\r\n");
